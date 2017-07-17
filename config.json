@@ -1,6 +1,7 @@
 {
     "debug": true,
-    "port": 4003,
+    "listener_port": "4003",
+    "port": 443,
     "username": "<tu usuario>",
     "password": "<tu password>",
     "root_url": "www.arcgis.com",
@@ -21,7 +22,8 @@
                 ["median_speed", "esriFieldTypeDouble"],
                 ["occupancy", "esriFieldTypeDouble"],
                 ["trafficIntensity", "esriFieldTypeDouble"]
-            ]
+            ],
+	    "whereClause":"id like 'urn:smartsantander:traffic:%'"
         },
 
         "lux" : {
@@ -36,7 +38,8 @@
                 ["luminousFlux", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"],
                 ["acceleration", "esriFieldTypeDouble"]
-            ]
+            ],
+	    "whereClause":"id like 'urn:smartsantander:lux:%'"
         },
 
         "sound" : {
@@ -49,7 +52,8 @@
                 ["Longitud", "esriFieldTypeDouble"],
                 ["sound", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"]
-            ]
+            ],
+	    "whereClause":"id like 'urn:smartsantander:sound:%'"
         },
 
         "soundacc" : {
@@ -63,7 +67,8 @@
                 ["sound", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"],
                 ["acceleration", "esriFieldTypeDouble"]
-            ]
+            ],
+	    "whereClause":"id like 'urn:smartsantander:soundacc:%'"
         },
 
         "bus" : {
@@ -80,7 +85,8 @@
                 ["speed", "esriFieldTypeDouble"],
                 ["status", "esriFieldTypeDouble"],
                 ["vehicle", "esriFieldTypeDouble"]
-            ]
+            ],
+	    "whereClause":"id like 'urn:smartsantander:bus:%'"
         }
     }
 }

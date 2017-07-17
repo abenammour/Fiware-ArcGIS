@@ -8,6 +8,7 @@ var config = require('./config.json'),
     service = new ArcNode(config);
 
 var sensors = {};
+var oids = {};
 
 app.use('/static', express.static('data'));
 app.use( bodyParser.json() );
@@ -18,7 +19,7 @@ service.getToken().then(function(response){
     if(response.error){
         console.log("Response: %s", JSON.stringify(response.error));
     }else{
-        var server = app.listen(config.port, function () {
+        var server = app.listen(config.listener_port, function () {
             var host = server.address().address;
             var port = server.address().port;
 
@@ -55,7 +56,7 @@ service.getToken().then(function(response){
  *
  ************************************************************/
 var sendToArcGIS = function (sensorDetails, req, res) {
-    var attributes, aux, sensor, i, j, numSensors, data, timeInstant, feature, attrsLen, attrName, x, y;
+    var attributes, aux, sensor, i, j, numSensors, addData, updateData, timeInstant, feature, attrsLen, attrName, x, y;
 
     // Add to sensors one object for each sensor
     numSensors = req.body.contextResponses.length;
@@ -74,7 +75,8 @@ var sendToArcGIS = function (sensorDetails, req, res) {
     }
 
     // Transform data to features
-    data = [];
+    addData = [];
+    updateData = [];
     attrsLen = sensorDetails.fields.length;
     for (var key in sensors) {
         if (sensors.hasOwnProperty(key)) {
@@ -89,7 +91,7 @@ var sendToArcGIS = function (sensorDetails, req, res) {
                 aux = sensor["position"].split(",");
                 y = aux[0];
                 x = aux[1];
-            }else if(sensor["Longitud"] && sensor["Longitud"]) {
+            }else if(sensor["Longitud"] && sensor["Latitud"]) {
                 x = sensor["Longitud"];
                 y = sensor["Latitud"];
             }else{
@@ -116,21 +118,51 @@ var sendToArcGIS = function (sensorDetails, req, res) {
                 attrName = sensorDetails.fields[i][0];
                 feature.attributes[attrName] = sensor[attrName];
             }
-            data.push(feature);
+	    if(oids[key]){
+                //Update
+                console.log("Feature to update = "+key+" (has OBJECTID = "+oids[key]+")");
+                //Include "OBJECTID"
+                feature.attributes["OBJECTID"]=oids[key];
+                updateData.push(feature);
+			}else{
+                //add
+                console.log("Feature to add = "+key);
+                addData.push(feature);
+            }
         }
     }
-
-    service.addFeatures({
-        serviceName: sensorDetails.serviceName,
-        layer: "0",
-        features: data
-    }).then(function(response){
-        console.log("New features added");
-        res.send(response);
-    },function(e){
-        console.log("Error: ", e);
-        res.send(e.message);
-    });
+    if(addData.length>0){
+        service.addFeatures({
+            serviceName: sensorDetails.serviceName,
+            layer: "0",
+            features: addData
+        }).then(function(response){
+            console.log("New features added");
+    	    console.log("Features added\nresponse = ", JSON.stringify(response, null, "\t"));
+            console.log("Added OIDs");
+    	    for(var i= 0; i < addData.length; i++){
+    	    	oids[addData[i].attributes.id]=response.addResults[i].objectId;
+	        console.log(addData[i].attributes.id+" => "+response.addResults[i].objectId);
+    	    }
+            res.send(response);
+        },function(e){
+            console.log("Error: ", e);
+            res.send(e.message);
+        });
+    }
+    if(updateData.length>0){
+        service.updateFeatures({
+            serviceName: sensorDetails.serviceName,
+            layer: "0",
+            features: updateData
+        }).then(function(response){
+            console.log("Features updated\nresponse = ", JSON.stringify(response, null, "\t"));
+            res.send(response);
+        },function(e){
+            console.log("Error: ", e);
+            res.send(e.message);
+        });
+    }
 };
 
 /************************************************************
@@ -148,7 +180,7 @@ var initFeatureService = function(sensor){
     service.checkIfFSExists(options).then(function(response){
 
         if(response.available){
-            console.log("Creamos servicio %s", sensor.serviceName);
+            console.log("Creating feature service %s", sensor.serviceName);
             service.createFeatureService({name: sensor.serviceName}).then(function(response){
 
                 var fields, layer, len, i;
@@ -173,7 +205,7 @@ var initFeatureService = function(sensor){
                 }
 
                 layer = ArcJSON.featureLayer({
-                    layerName: sensor.serviceName,
+                    name: sensor.serviceName,
                     fields: fields
                 });
 
@@ -191,6 +223,26 @@ var initFeatureService = function(sensor){
             });
         }else{
             console.log("Yes, service initialized: ", sensor.serviceName);
+			if(sensor.whereClause){
+    			service.getFeatures({
+                        serviceName: sensor.serviceName,
+    					layer: "0",
+                        query: {
+                            "where": sensor.whereClause,
+                            "outFields": "OBJECTID,id",
+                            "returnGeometry":"false",
+                            "f":"json"
+                        }
+                    }).then(function(response){
+                        console.log("Existing (ID,OID) pairs:");
+                        for(var i= 0; i < response.features.length; i++){
+                            oids[response.features[i].attributes.id]=response.features[i].attributes.OBJECTID;
+                            console.log(response.features[i].attributes.id+" => "+response.features[i].attributes.OBJECTID);
+                        }
+                    },function(e){
+                        console.log("Error: ", e);
+                    });
+            }
         }
     },function(e){
         console.log("Error: ", e);

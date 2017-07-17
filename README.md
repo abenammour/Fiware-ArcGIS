@@ -22,7 +22,8 @@ Let's review the configuration file (*config.json*):
 ```javascript
 {
     "debug": false,
-    "port": 4003,
+    "listener_port": 4003,
+    "port": 443,
     "username": "<your user>",
     "password": "<your password>",
     "root_url": "www.arcgis.com",
@@ -42,7 +43,8 @@ Let's review the configuration file (*config.json*):
                 ["median_speed", "esriFieldTypeDouble"],
                 ["occupancy", "esriFieldTypeDouble"],
                 ["trafficIntensity", "esriFieldTypeDouble"]
-            ]
+            ],
+            "whereClause":"id like 'urn:smartsantander:traffic:%'"
         },
 
         "lux" : {
@@ -57,7 +59,8 @@ Let's review the configuration file (*config.json*):
                 ["luminousFlux", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"],
                 ["acceleration", "esriFieldTypeDouble"]
-            ]
+            ],
+            "whereClause":"id like 'urn:smartsantander:lux:%'"
         },
 
         "sound" : {
@@ -70,7 +73,8 @@ Let's review the configuration file (*config.json*):
                 ["Longitud", "esriFieldTypeDouble"],
                 ["sound", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"]
-            ]
+            ],
+            "whereClause":"id like 'urn:smartsantander:sound:%'"
         },
 
         "soundacc" : {
@@ -84,7 +88,8 @@ Let's review the configuration file (*config.json*):
                 ["sound", "esriFieldTypeDouble"],
                 ["batteryCharge", "esriFieldTypeDouble"],
                 ["acceleration", "esriFieldTypeDouble"]
-            ]
+            ],
+            "whereClause":"id like 'urn:smartsantander:soundacc:%'"
         },
 
         "bus" : {
@@ -101,7 +106,8 @@ Let's review the configuration file (*config.json*):
                 ["speed", "esriFieldTypeDouble"],
                 ["status", "esriFieldTypeDouble"],
                 ["vehicle", "esriFieldTypeDouble"]
-            ]
+            ],
+            "whereClause":"id like 'urn:smartsantander:bus:%'"
         }
     }
 }
@@ -110,7 +116,8 @@ Let's review the configuration file (*config.json*):
 Let's see the configurations variables:
 
 * **debug**: *True/False* if we want to activate/desactivate the verbose mode.
-* **port**: Listening port
+* **listener_port**: Listening port
+* **port**: ArcGIS Online/Server port
 * **username**: nominal user
 * **password**: nominal user's password
 * **root_url**: *www.arcgis.com* if we want to user ArcGIS Online; or the url where the *Portal for ArcGIS* is located in case you want to use *ArcGIS Server*. It's neccesary to call the [*generateToken*](http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#/Generate_Token/02r3000000m5000000/), [*isServiceNameAvailable*](http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r300000076000000) and [*createService*](http://resources.arcgis.com/en/help/arcgis-rest-api/index.html#//02r30000027r000000) methods
@@ -120,6 +127,7 @@ Let's see the configurations variables:
   * **serviceName**: name we want to use to host the data
   * **route**: path where the app is going to be listening
   * **fields**: it's an array of arrays with two elements: the attribute name and the field type
+  * **whereClause**: the "where clause" to identify each point of interrest (PoI) on ArcGIS. If fulfilled, the connector will execute the query and maintain internally a list of all existing PoIs on ArcGIS. Each sensor information will update the corresponding existing PoI. Otherwise, the connector inserts new PoI on ArcGIS.
 
 The next image shows where you will find the **services_url** and **account_id** values in ArcGIS Online:
 <img src="/docs/fiware_agol_params.png" style="width:100%">
