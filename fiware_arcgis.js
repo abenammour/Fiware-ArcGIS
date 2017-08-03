@@ -256,11 +256,15 @@ var initFeatureService = function(sensor){
  *
  ************************************************************/
 
-// Method to transform sensor datetime format to ArcGIS datetime
+// Method to transform sensor datetime format to ArcGIS datetime, or return the now timestamp if no sensor datetime is present
 var parseDate = function(timeInstant){
     var date;
-    timeInstant = timeInstant.replace("-","/").replace("-","/").replace("T"," ");
-    date = new Date(timeInstant);
+    if(timeInstant){
+        timeInstant = timeInstant.replace("-","/").replace("-","/").replace("T"," ");
+        date = new Date(timeInstant);
+    }else{
+        date = new Date();//now
+    }
     return date.getTime();
 };
 
